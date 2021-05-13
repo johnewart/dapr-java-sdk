@@ -15,10 +15,13 @@ package io.dapr.actors.client;
 
 import io.dapr.actors.ActorId;
 import io.dapr.actors.ActorType;
+import io.dapr.actors.runtime.ActorRuntime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.mockito.Mockito.mock;
 
 public class ActorProxyBuilderTest {
 
@@ -37,6 +40,7 @@ public class ActorProxyBuilderTest {
   @Test(expected = IllegalArgumentException.class)
   public void buildWithNullActorId() {
     new ActorProxyBuilder("test", Object.class, actorClient)
+        .withActorRuntime(mock(ActorRuntime.class))
         .build(null);
   }
 
@@ -64,7 +68,8 @@ public class ActorProxyBuilderTest {
 
   @Test()
   public void build() {
-    ActorProxyBuilder<ActorProxy> builder = new ActorProxyBuilder("test", ActorProxy.class, actorClient);
+    ActorProxyBuilder<ActorProxy> builder = new ActorProxyBuilder<>("test", ActorProxy.class, actorClient)
+        .withActorRuntime(mock(ActorRuntime.class));
     ActorProxy actorProxy = builder.build(new ActorId("100"));
 
     Assert.assertNotNull(actorProxy);
@@ -74,7 +79,8 @@ public class ActorProxyBuilderTest {
 
   @Test()
   public void buildWithType() {
-    ActorProxyBuilder<MyActor> builder = new ActorProxyBuilder(MyActor.class, actorClient);
+    ActorProxyBuilder<MyActor> builder = new ActorProxyBuilder<>(MyActor.class, actorClient)
+        .withActorRuntime(mock(ActorRuntime.class));
     MyActor actorProxy = builder.build(new ActorId("100"));
 
     Assert.assertNotNull(actorProxy);
@@ -82,7 +88,8 @@ public class ActorProxyBuilderTest {
 
   @Test()
   public void buildWithTypeDefaultName() {
-    ActorProxyBuilder<ActorWithDefaultName> builder = new ActorProxyBuilder(ActorWithDefaultName.class, actorClient);
+    ActorProxyBuilder<ActorWithDefaultName> builder = new ActorProxyBuilder<>(ActorWithDefaultName.class, actorClient)
+        .withActorRuntime(mock(ActorRuntime.class));
     ActorWithDefaultName actorProxy = builder.build(new ActorId("100"));
 
     Assert.assertNotNull(actorProxy);
