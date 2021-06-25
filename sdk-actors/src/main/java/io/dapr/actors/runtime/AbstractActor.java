@@ -15,6 +15,7 @@ package io.dapr.actors.runtime;
 
 import io.dapr.actors.ActorId;
 import io.dapr.actors.ActorTrace;
+import io.dapr.actors.runtime.reentrancy.ReentrancyStack;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -58,7 +59,7 @@ public abstract class AbstractActor {
   /**
    * Internal control to assert method invocation on start and finish in this SDK.
    */
-  private boolean started;
+  private ReentrancyStack reentrancyStack;
 
   /**
    * Instantiates a new Actor.
@@ -74,7 +75,7 @@ public abstract class AbstractActor {
           runtimeContext.getActorTypeInformation().getName(),
           id);
     this.actorTrace = runtimeContext.getActorTrace();
-    this.started = false;
+    this.reentrancyStack = new ReentrancyStack();
   }
 
   /**
@@ -251,13 +252,13 @@ public abstract class AbstractActor {
   /**
    * Resets the cached state of this Actor.
    */
-  void rollback() {
-    //    if (!this.started) {
-    //      throw new IllegalStateException("Cannot reset state before starting call.");
-    //    }
+  void rollback(final ActorMethodContext context) {
+    if (this.reentrancyStack.isOpen(context.getReentrancyId())) {
+      throw new IllegalStateException("Cannot reset state before starting call.");
+    }
 
     this.resetState();
-    this.started = false;
+    this.reentrancyStack.endOrDecrementStack(context.getReentrancyId());
   }
 
   /**
@@ -302,11 +303,11 @@ public abstract class AbstractActor {
    */
   Mono<Void> onPreActorMethodInternal(ActorMethodContext actorMethodContext) {
     return Mono.fromRunnable(() -> {
-      //      if (this.started) {
-      //        throw new IllegalStateException("Cannot invoke a method before completing previous call.");
-      //      }
+      if (!this.reentrancyStack.isOpen(actorMethodContext.getReentrancyId())) {
+        throw new IllegalStateException("Cannot invoke a method before completing previous call.");
+      }
 
-      this.started = true;
+      this.reentrancyStack.startOrIncreaseStack(actorMethodContext.getReentrancyId());
     }).then(this.onPreActorMethod(actorMethodContext));
   }
 
@@ -318,13 +319,13 @@ public abstract class AbstractActor {
    */
   Mono<Void> onPostActorMethodInternal(ActorMethodContext actorMethodContext) {
     return Mono.fromRunnable(() -> {
-      if (!this.started) {
-        //         throw new IllegalStateException("Cannot complete a method before starting a call.");
+      if (!this.reentrancyStack.inProgress()) {
+        throw new IllegalStateException("Cannot complete a method before starting a call.");
       }
     }).then(this.onPostActorMethod(actorMethodContext))
           .then(this.saveState())
           .then(Mono.fromRunnable(() -> {
-            this.started = false;
+            this.reentrancyStack.endOrDecrementStack(actorMethodContext.getReentrancyId());
           }));
   }
 

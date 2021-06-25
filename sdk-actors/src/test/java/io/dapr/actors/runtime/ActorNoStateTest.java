@@ -246,6 +246,7 @@ public class ActorNoStateTest {
       eq(context.getActorTypeInformation().getName()),
       eq(actorId.toString()),
       any(),
+      any(),
       any()))
       .thenAnswer(invocationOnMock ->
         this.manager.invokeMethod(
@@ -275,6 +276,7 @@ public class ActorNoStateTest {
     when(daprClient.invoke(
             eq(context.getActorTypeInformation().getName()),
             eq(actorId.toString()),
+            any(),
             any(),
             any()))
             .thenAnswer(invocationOnMock ->

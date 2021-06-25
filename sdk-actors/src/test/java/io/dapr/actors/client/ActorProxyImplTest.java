@@ -15,6 +15,7 @@ package io.dapr.actors.client;
 
 import io.dapr.actors.ActorId;
 import io.dapr.actors.ActorMethod;
+import io.dapr.actors.runtime.ActorInvocationContext;
 import io.dapr.actors.runtime.ActorRuntime;
 import io.dapr.exceptions.DaprException;
 import io.dapr.serializer.DaprObjectSerializer;
@@ -22,11 +23,17 @@ import io.dapr.serializer.DefaultObjectSerializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,7 +69,7 @@ public class ActorProxyImplTest {
     Mono<byte[]> daprResponse = Mono.just(
             "{\n\t\t\"propertyA\": \"valueA\",\n\t\t\"propertyB\": \"valueB\"\n\t}".getBytes());
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
             .thenReturn(daprResponse);
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -74,7 +81,7 @@ public class ActorProxyImplTest {
 
     Mono<MyData> result = actorProxy.invokeMethod("getData", MyData.class);
     MyData myData = result.block();
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertEquals("valueA", myData.getPropertyA());
     Assert.assertEquals("valueB", myData.getPropertyB());// propertyB=null
   }
@@ -85,7 +92,7 @@ public class ActorProxyImplTest {
     Mono<byte[]> daprResponse = Mono.just(
         "{\n\t\t\"propertyA\": \"valueA\",\n\t\t\"propertyB\": \"valueB\"\n\t}".getBytes());
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -96,7 +103,7 @@ public class ActorProxyImplTest {
         actorRuntime);
 
     MyData myData = (MyData) actorProxy.invoke(actorProxy, Actor.class.getMethod("getData"), null);
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertEquals("valueA", myData.getPropertyA());
     Assert.assertEquals("valueB", myData.getPropertyB());// propertyB=null
   }
@@ -107,7 +114,7 @@ public class ActorProxyImplTest {
     Mono<byte[]> daprResponse = Mono.just(
         "{\n\t\t\"propertyA\": \"valueA\",\n\t\t\"propertyB\": \"valueB\"\n\t}".getBytes());
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -118,9 +125,9 @@ public class ActorProxyImplTest {
         actorRuntime);
 
     Mono<MyData> res = (Mono<MyData>) actorProxy.invoke(actorProxy, Actor.class.getMethod("getDataMono"), null);
-    Assert.assertNotNull(res);
+    assertNotNull(res);
     MyData myData = res.block();
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertEquals("valueA", myData.getPropertyA());
     Assert.assertEquals("valueB", myData.getPropertyB());// propertyB=null
   }
@@ -131,7 +138,7 @@ public class ActorProxyImplTest {
     Mono<byte[]> daprResponse = Mono.just(
         "\"OK\"".getBytes());
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes())))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes()), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -155,7 +162,7 @@ public class ActorProxyImplTest {
     Mono<byte[]> daprResponse = Mono.just(
         "\"OK\"".getBytes());
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes())))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes()), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -170,7 +177,7 @@ public class ActorProxyImplTest {
         Actor.class.getMethod("echoMono", String.class),
         new Object[] { "hello world" } );
 
-    Assert.assertNotNull(res);
+    assertNotNull(res);
     Assert.assertEquals("OK", res.block());
   }
 
@@ -179,7 +186,7 @@ public class ActorProxyImplTest {
     final ActorClient daprClient = mock(ActorClient.class);
     Mono<byte[]> daprResponse = Mono.empty();
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -198,7 +205,7 @@ public class ActorProxyImplTest {
     final ActorClient daprClient = mock(ActorClient.class);
     Mono<byte[]> daprResponse = Mono.empty();
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -209,7 +216,7 @@ public class ActorProxyImplTest {
         actorRuntime);
 
     Mono<Void> myData = (Mono<Void>)actorProxy.invoke(actorProxy, Actor.class.getMethod("doSomethingMono"), null);
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertNull(myData.block());
   }
 
@@ -218,7 +225,7 @@ public class ActorProxyImplTest {
     final ActorClient daprClient = mock(ActorClient.class);
     Mono<byte[]> daprResponse = Mono.empty();
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes())))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes()), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -233,7 +240,7 @@ public class ActorProxyImplTest {
         Actor.class.getMethod("doSomethingMonoWithArg", String.class),
         new Object[] { "hello world" });
 
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertNull(myData.block());
   }
 
@@ -253,7 +260,7 @@ public class ActorProxyImplTest {
         Actor.class.getMethod("tooManyArgs", String.class, String.class),
         new Object[] { "hello", "world" });
 
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertNull(myData.block());
   }
 
@@ -262,7 +269,7 @@ public class ActorProxyImplTest {
     final ActorClient daprClient = mock(ActorClient.class);
     Mono<byte[]> daprResponse = Mono.empty();
 
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes())))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.eq("\"hello world\"".getBytes()), any()))
         .thenReturn(daprResponse);
 
     final ActorProxyImpl actorProxy = new ActorProxyImpl(
@@ -283,7 +290,7 @@ public class ActorProxyImplTest {
   @Test()
   public void invokeActorMethodWithoutDataWithEmptyReturnType() {
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(Mono.just("".getBytes()));
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -322,7 +329,7 @@ public class ActorProxyImplTest {
   @Test()
   public void invokeActorMethodSavingDataWithReturnType() {
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull(), any()))
         .thenReturn(
           Mono.just("{\n\t\t\"propertyA\": \"valueA\",\n\t\t\"propertyB\": \"valueB\"\n\t}".getBytes()));
 
@@ -339,7 +346,7 @@ public class ActorProxyImplTest {
 
     Mono<MyData> result = actorProxy.invokeMethod("getData", saveData, MyData.class);
     MyData myData = result.block();
-    Assert.assertNotNull(myData);
+    assertNotNull(myData);
     Assert.assertEquals("valueA", myData.getPropertyA());
     Assert.assertEquals("valueB", myData.getPropertyB());//propertyB=null
 
@@ -348,7 +355,7 @@ public class ActorProxyImplTest {
   @Test(expected = DaprException.class)
   public void invokeActorMethodSavingDataWithIncorrectReturnType() {
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull(), any()))
         .thenReturn(Mono.just("{test}".getBytes()));
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -373,7 +380,7 @@ public class ActorProxyImplTest {
   @Test()
   public void invokeActorMethodSavingDataWithEmptyReturnType() {
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull(), any()))
         .thenReturn(Mono.just("".getBytes()));
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -426,7 +433,7 @@ public class ActorProxyImplTest {
     saveData.setPropertyB("valueB");
 
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNotNull(), any()))
         .thenReturn(Mono.empty());
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -468,7 +475,7 @@ public class ActorProxyImplTest {
   @Test()
   public void invokeActorMethodWithoutDataWithVoidReturnType() {
     final ActorClient daprClient = mock(ActorClient.class);
-    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull()))
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), any()))
         .thenReturn(Mono.empty());
 
     final ActorProxy actorProxy = new ActorProxyImpl(
@@ -481,6 +488,52 @@ public class ActorProxyImplTest {
     Mono<Void> result = actorProxy.invokeMethod("getData");
     Void emptyResponse = result.block();
     Assert.assertNull(emptyResponse);
+  }
+
+  @Test
+  public void invokeActorMethodWithReentrancyIdSet() {
+    final ArgumentCaptor<ActorInvocationContext> headerCaptor = ArgumentCaptor.forClass(ActorInvocationContext.class);
+    final ActorClient daprClient = mock(ActorClient.class);
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), headerCaptor.capture()))
+        .thenReturn(Mono.empty());
+
+    final ActorRuntime reentrantRuntime = mock(ActorRuntime.class);
+    when(reentrantRuntime.getActorReentrancyId(anyString(), anyString())).thenReturn(Mono.just(Optional.of("1")));
+
+    final ActorProxy actorProxy = new ActorProxyImpl(
+        "myActorType",
+        new ActorId("100"),
+        new DefaultObjectSerializer(),
+        daprClient,
+        reentrantRuntime);
+
+    actorProxy.invokeMethod("getData").block();
+    final ActorInvocationContext context = headerCaptor.getValue();
+    assertNotNull(context);
+    assertNotNull(context.getHeaders());
+    assertTrue(context.getHeaders().containsKey("Dapr-Reentrancy-Id"));
+    assertEquals("1", context.getHeaders().get("Dapr-Reentrancy-Id"));
+  }
+
+  @Test
+  public void invokeActorMethodWithoutReentrancyIdSet() {
+    final ArgumentCaptor<ActorInvocationContext> headerCaptor = ArgumentCaptor.forClass(ActorInvocationContext.class);
+    final ActorClient daprClient = mock(ActorClient.class);
+    when(daprClient.invoke(anyString(), anyString(), anyString(), Mockito.isNull(), headerCaptor.capture()))
+        .thenReturn(Mono.empty());
+
+    final ActorProxy actorProxy = new ActorProxyImpl(
+        "myActorType",
+        new ActorId("100"),
+        new DefaultObjectSerializer(),
+        daprClient,
+        actorRuntime);
+
+    actorProxy.invokeMethod("getData").block();
+    final ActorInvocationContext context = headerCaptor.getValue();
+    assertNotNull(context);
+    assertNotNull(context.getHeaders());
+    assertTrue(context.getHeaders().isEmpty());
   }
 
   interface Actor {

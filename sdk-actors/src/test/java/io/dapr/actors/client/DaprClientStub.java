@@ -13,6 +13,7 @@ limitations under the License.
 
 package io.dapr.actors.client;
 
+import io.dapr.actors.runtime.ActorInvocationContext;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -29,7 +30,7 @@ public class DaprClientStub extends ActorClient implements DaprClient {
                              String actorId,
                              String methodName,
                              byte[] jsonPayload,
-                             Map<String, String> headers) {
+                             ActorInvocationContext context) {
     return invoke(actorType, actorId, methodName, jsonPayload);
   }
 }

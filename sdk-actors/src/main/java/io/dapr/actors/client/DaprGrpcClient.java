@@ -14,6 +14,7 @@ limitations under the License.
 package io.dapr.actors.client;
 
 import com.google.protobuf.ByteString;
+import io.dapr.actors.runtime.ActorInvocationContext;
 import io.dapr.config.Properties;
 import io.dapr.exceptions.DaprException;
 import io.dapr.internal.opencensus.GrpcWrapper;
@@ -60,7 +61,7 @@ class DaprGrpcClient implements DaprClient {
    */
   @Override
   public Mono<byte[]> invoke(String actorType, String actorId, String methodName, byte[] jsonPayload) {
-    return invoke(actorType, actorId, methodName, jsonPayload, Collections.emptyMap());
+    return invoke(actorType, actorId, methodName, jsonPayload, new ActorInvocationContext());
   }
 
   /**
@@ -71,7 +72,7 @@ class DaprGrpcClient implements DaprClient {
                              String actorId,
                              String methodName,
                              byte[] jsonPayload,
-                             Map<String, String> headers) {
+                             ActorInvocationContext invocationContext) {
     DaprProtos.InvokeActorRequest req =
         DaprProtos.InvokeActorRequest.newBuilder()
             .setActorType(actorType)
