@@ -27,6 +27,7 @@ public class MyActorService {
     System.out.println("Hello from main() MyActorService");
 
     long port = Long.parseLong(args[0]);
+    ActorRuntime.getInstance().getConfig().setActorReentrancyConfig(true, null);
     ActorRuntime.getInstance().registerActor(MyActorImpl.class);
 
     TestApplication.start(port);
